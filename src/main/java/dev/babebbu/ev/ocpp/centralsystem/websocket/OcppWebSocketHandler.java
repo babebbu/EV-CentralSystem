@@ -36,7 +36,7 @@ public class OcppWebSocketHandler extends TextWebSocketHandler {
         switch ((int) message[MESSAGE_TYPE]) {
             case MessageType.CALL -> handleCall(session, message);
             case MessageType.CALL_RESULT -> handleCallResult(session, message);
-            case MessageType.CALL_ERROR -> handleCallError();
+            case MessageType.CALL_ERROR -> handleCallError(session, message);
         }
     }
 
@@ -51,17 +51,17 @@ public class OcppWebSocketHandler extends TextWebSocketHandler {
     }
 
     /**
-     *  --------------                  --------------
-     *  |   Client   | =======[Call]-=> |   Server   |
-     *  --------------                  --------------
+     *  --------------                     --------------
+     *  |   Client   | ==========[Call]==> |   Server   |
+     *  --------------                     --------------
      *  Server is accepting Call from client and Call must be handle
      */
-    public void handleCall(WebSocketSession session, Object[] message) throws IOException {
+    public void handleCall(WebSocketSession session, Object[] call) throws IOException {
         final int ACTION = 2;
         final int PAYLOAD = 3;
 
-        String action = message[ACTION].toString();
-        Object payload = message[PAYLOAD];
+        String action = call[ACTION].toString();
+        Object payload = call[PAYLOAD];
 
         if (payload instanceof BootNotificationRequest request) {
             session.sendMessage(
@@ -81,17 +81,17 @@ public class OcppWebSocketHandler extends TextWebSocketHandler {
     }
     
     /**        
-     *  --------------                   --------------
-     *  |   Client   | <==[Call]======== |   Server   |
-     *  --------------                   --------------
-     *  --------------                   --------------
-     *  |   Client   | =====[Confirm]==> |   Server   |
-     *  --------------                   --------------
+     *  --------------                     --------------
+     *  |   Client   | <==[Call]========== |   Server   |
+     *  --------------                     --------------
+     *  --------------                     --------------
+     *  |   Client   | ====[CallResult]==> |   Server   |
+     *  --------------                     --------------
      *  Server is accepting Call from client and Call must be handle  
      */                                                              
-    public void handleCallResult(WebSocketSession session, Object[] message) throws IOException {
+    public void handleCallResult(WebSocketSession session, Object[] callResult) throws IOException {
         final int PAYLOAD = 2;
-        Object payload = message[PAYLOAD];
+        Object payload = callResult[PAYLOAD];
 
         if (payload instanceof RemoteStartTransactionConfirm confirm) {
             session.sendMessage(new TextMessage(confirm.toString()));
@@ -102,15 +102,15 @@ public class OcppWebSocketHandler extends TextWebSocketHandler {
     }
 
     /**
-     *  --------------                  --------------
-     *  |   Client   | <==[Call]======= |   Server   |
-     *  --------------                  --------------
-     *  --------------                  --------------
-     *  |   Client   | ======[Error]==> |   Server   |
-     *  --------------                  --------------
+     *  --------------                     --------------
+     *  |   Client   | <==[Call]========== |   Server   |
+     *  --------------                     --------------
+     *  --------------                     --------------
+     *  |   Client   | =====[CallError]==> |   Server   |
+     *  --------------                     --------------
      *  Server is accepting Call from client and Call must be handle
      */
-    public void handleCallError() {
+    public void handleCallError(WebSocketSession session, Object[] callError) {
 
     }
 
